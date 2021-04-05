@@ -1,56 +1,58 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using TodoAPI.Data;
+using TodoAPI.Domain;
 using TodoAPI.Interfaces;
-using TodoAPI.Models;
 
 namespace TodoAPI.Services
 {
     public class TodoRepository : ITodoRepository
     {
-        private List<TodoItem> _todoList;
+        private readonly TodoAPIContext _context;
 
-        public TodoRepository()
+        public TodoRepository(TodoAPIContext context)
         {
-            InitializeData();
+            _context = context;
         }
 
-        public IEnumerable<TodoItem> All
+        public Task<List<TodoItem>> GetAllAsync() => _context.TodoItems.ToListAsync();
+
+        public bool DoesItemExist(string id) => _context.TodoItems.Any(item => item.ID == id);
+
+        public Task<TodoItem> FindAsync(string id) => _context.TodoItems.FirstOrDefaultAsync(item => item.ID == id);
+
+        public async Task InsertAsync(TodoItem item)
         {
-            get { return _todoList; }
+            await _context.TodoItems.AddAsync(item);
+            await _context.SaveChangesAsync();
         }
 
-        public bool DoesItemExist(string id)
+        public async Task UpdateAsync(TodoItem item)
         {
-            return _todoList.Any(item => item.ID == id);
+            var todoItem = await FindAsync(item.ID);
+            if(todoItem != null)
+            {
+                todoItem.Done = item.Done;
+                todoItem.Name = item.Name;
+                todoItem.Notes = item.Notes;
+                await _context.SaveChangesAsync();
+            }
         }
 
-        public TodoItem Find(string id)
+        public async Task DeleteAsync(string id)
         {
-            return _todoList.FirstOrDefault(item => item.ID == id);
+            var todoItem = await FindAsync(id);
+            if(todoItem != null)
+            {
+                _context.TodoItems.Remove(todoItem);
+                await _context.SaveChangesAsync();
+            }
         }
 
-        public void Insert(TodoItem item)
+        public async Task InitializeDataAsync()
         {
-            _todoList.Add(item);
-        }
-
-        public void Update(TodoItem item)
-        {
-            var todoItem = this.Find(item.ID);
-            var index = _todoList.IndexOf(todoItem);
-            _todoList.RemoveAt(index);
-            _todoList.Insert(index, item);
-        }
-
-        public void Delete(string id)
-        {
-            _todoList.Remove(this.Find(id));
-        }
-
-        private void InitializeData()
-        {
-            _todoList = new List<TodoItem>();
-
             var todoItem1 = new TodoItem
             {
                 ID = "6bb8a868-dba1-4f1a-93b7-24ebce87e243",
@@ -74,10 +76,19 @@ namespace TodoAPI.Services
                 Notes = "All app stores",
                 Done = false,
             };
-
-            _todoList.Add(todoItem1);
-            _todoList.Add(todoItem2);
-            _todoList.Add(todoItem3);
+            if (!_context.TodoItems.Any(_ => _.ID == todoItem1.ID))
+            {
+                await _context.AddAsync(todoItem1);
+            }
+            if (!_context.TodoItems.Any(_ => _.ID == todoItem2.ID))
+            {
+                await _context.AddAsync(todoItem2);
+            }
+            if (!_context.TodoItems.Any(_ => _.ID == todoItem3.ID))
+            {
+                await _context.AddAsync(todoItem3);
+            }
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TodoAPI.Data;
 using TodoAPI.Interfaces;
 using TodoAPI.Services;
 
@@ -18,10 +19,13 @@ namespace TodoAPI
 
         public IConfiguration Configuration { get; }
 
-       #region snippet2
+        #region snippet2
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<ITodoRepository, TodoRepository>();
+            services.AddDbContext<TodoAPIContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"))
+            );
+            services.AddScoped<ITodoRepository, TodoRepository>();
             services.AddControllers();
         }
         #endregion

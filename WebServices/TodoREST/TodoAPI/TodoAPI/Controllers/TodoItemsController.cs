@@ -1,8 +1,9 @@
-﻿using System;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
+using TodoAPI.Domain;
 using TodoAPI.Interfaces;
-using TodoAPI.Models;
 
 namespace TodoAPI.Controllers
 {
@@ -33,15 +34,12 @@ namespace TodoAPI.Controllers
 
         #region snippet
         [HttpGet]
-        public IActionResult List()
-        {
-            return Ok(_todoRepository.All);
-        }
+        public async Task<IActionResult> List() => Ok(await _todoRepository.GetAllAsync());
         #endregion
 
         #region snippetCreate
         [HttpPost]
-        public IActionResult Create([FromBody]TodoItem item)
+        public async Task<IActionResult> Create([FromBody]TodoItem item)
         {
             try
             {
@@ -54,7 +52,7 @@ namespace TodoAPI.Controllers
                 {
                     return StatusCode(StatusCodes.Status409Conflict, ErrorCode.TodoItemIDInUse.ToString());
                 }
-                _todoRepository.Insert(item);
+                await _todoRepository.InsertAsync(item);
             }
             catch (Exception)
             {
@@ -66,7 +64,7 @@ namespace TodoAPI.Controllers
 
         #region snippetEdit
         [HttpPut]
-        public IActionResult Edit([FromBody] TodoItem item)
+        public async Task<IActionResult> Edit([FromBody] TodoItem item)
         {
             try
             {
@@ -74,12 +72,12 @@ namespace TodoAPI.Controllers
                 {
                     return BadRequest(ErrorCode.TodoItemNameAndNotesRequired.ToString());
                 }
-                var existingItem = _todoRepository.Find(item.ID);
+                var existingItem = await _todoRepository.FindAsync(item.ID);
                 if (existingItem == null)
                 {
                     return NotFound(ErrorCode.RecordNotFound.ToString());
                 }
-                _todoRepository.Update(item);
+                await _todoRepository.UpdateAsync(item);
             }
             catch (Exception)
             {
@@ -91,16 +89,16 @@ namespace TodoAPI.Controllers
         
         #region snippetDelete
         [HttpDelete("{id}")]
-        public IActionResult Delete(string id)
+        public async Task<IActionResult> Delete(string id)
         {
             try
             {
-                var item = _todoRepository.Find(id);
+                var item = await  _todoRepository.FindAsync(id);
                 if (item == null)
                 {
                     return NotFound(ErrorCode.RecordNotFound.ToString());
                 }
-                _todoRepository.Delete(id);
+                await _todoRepository.DeleteAsync(id);
             }
             catch (Exception)
             {

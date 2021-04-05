@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
-using TodoAPI.Models;
+using System.Threading.Tasks;
+using TodoAPI.Domain;
 
 namespace TodoAPI.Interfaces
 {
     public interface ITodoRepository
     {
         bool DoesItemExist(string id);
-        IEnumerable<TodoItem> All { get; }
-        TodoItem Find(string id);
-        void Insert(TodoItem item);
-        void Update(TodoItem item);
-        void Delete(string id);
+        Task<List<TodoItem>> GetAllAsync();
+        Task<TodoItem> FindAsync(string id);
+        Task InsertAsync(TodoItem item);
+        Task UpdateAsync(TodoItem item);
+        Task DeleteAsync(string id);
+        Task InitializeDataAsync();
     }
 }
